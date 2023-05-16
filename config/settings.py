@@ -30,6 +30,8 @@ ALLOWED_HOSTS = []
 
 CUSTOM_APPS = [
     "users",
+    "rooms",
+    "commons",
 ]
 
 THIRD_PARTY_APPS = [
