@@ -39,6 +39,7 @@ class Room(CommonModel):
         return self.name
 
     def total_amenities(self):
+        print(dir(self.kind))
         return self.amenities.count()
 
 class Amenity(CommonModel):

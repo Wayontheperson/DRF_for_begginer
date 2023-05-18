@@ -32,6 +32,7 @@ CUSTOM_APPS = [
     "users",
     "rooms",
     "commons",
+    "categories",
 ]
 
 THIRD_PARTY_APPS = [
