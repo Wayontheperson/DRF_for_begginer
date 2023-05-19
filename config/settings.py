@@ -35,6 +35,8 @@ CUSTOM_APPS = [
     "categories",
     "experiences",
     "reviews",
+    "wishlists",
+
 ]
 
 THIRD_PARTY_APPS = [
