@@ -34,6 +34,7 @@ CUSTOM_APPS = [
     "commons",
     "categories",
     "experiences",
+    "reviews",
 ]
 
 THIRD_PARTY_APPS = [
