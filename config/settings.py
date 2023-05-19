@@ -36,6 +36,7 @@ CUSTOM_APPS = [
     "experiences",
     "reviews",
     "wishlists",
+    "bookings"
 
 ]
 
