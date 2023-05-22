@@ -37,7 +37,8 @@ CUSTOM_APPS = [
     "reviews",
     "wishlists",
     "bookings",
-    "medias"
+    "medias",
+    "direct_messages",
 
 ]
 
