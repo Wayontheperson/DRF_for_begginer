@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ChattingRoom
+from .models import ChattingRoom, Message
 
 
 @admin.register(ChattingRoom)
@@ -11,7 +11,7 @@ class ChattingRoomAdmin(admin.ModelAdmin):
     )
     list_filter = ("created_at",)
 
-@admin.register(admin.ModelAdmin)
+@admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
 
     list_display = (

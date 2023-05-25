@@ -31,7 +31,7 @@ class Amenities(APIView):
 class AmedityDetail(APIView):
     def get_object(self, pk):
         try:
-            return Amenity.objects.all()
+            return Amenity.objects.filter(id=pk)
         except Amenity.DoesNotExist:
             raise NotFound
 
@@ -57,4 +57,3 @@ class AmedityDetail(APIView):
                 serializer.errors,
                 status=HTTP_400_BAD_REQUEST,
             )
-    # def delete(self):
