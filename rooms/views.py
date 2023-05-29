@@ -9,6 +9,7 @@ from rest_framework.exceptions import (
     PermissionDenied,
 )
 
+
 class Amenities(APIView):
     def get(self, request):
         all_amenities = Amenity.objects.all()
@@ -19,14 +20,13 @@ class Amenities(APIView):
         serializer = serializers.AmenitySerializer(data=request.data)
         if serializer.is_valid():
             amenity = serializer.save()
-            return Response(
-                serializers.AmenitySerializer(amenity).data
-            )
+            return Response(serializers.AmenitySerializer(amenity).data)
         else:
             return Response(
                 serializer.errors,
                 status=HTTP_400_BAD_REQUEST,
             )
+
 
 class AmedityDetail(APIView):
     def get_object(self, pk):
@@ -35,7 +35,7 @@ class AmedityDetail(APIView):
         except Amenity.DoesNotExist:
             raise NotFound
 
-    def get(self,request, pk):
+    def get(self, request, pk):
         amenity = self.get_object(pk)
         serializer = serializers.AmenitySerializer(amenity)
         return Response(serializer.data)
@@ -49,17 +49,35 @@ class AmedityDetail(APIView):
         )
         if serializer.is_valid():
             updated_amenity = serializer.save()
-            return Response(
-                serializers.AmenitySerializer(updated_amenity).data
-            )
+            return Response(serializers.AmenitySerializer(updated_amenity).data)
         else:
             return Response(
                 serializer.errors,
                 status=HTTP_400_BAD_REQUEST,
             )
-        
-    def delete(self,pk):
+
+    def delete(self, pk):
         delete_item = self.get_object(pk)
         delete_item.delete()
         return Response(status=HTTP_204_NO_CONTENT)
 
+
+class Rooms(APIView):
+    def get(self, request):
+        room = Room.objects.all()
+        serializer = serializers.RoomSerializer(room, many=True)
+        return Response(serializer.data)
+
+
+class RoomsDetail(APIView):
+    def _get_object(self, pk):
+        try:
+            room = Room.objects.get(id=pk)
+            return room
+        except Room.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        room = self._get_object(pk)
+        serializer = serializers.RoomDetailSerializer(room)
+        return Response(serializer.data)

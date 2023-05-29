@@ -1,12 +1,13 @@
 from django.db import models
 from commons.models import CommonModel
+from users.models import User
 
 
 class Room(CommonModel):
     class RoomKindChoices(models.TextChoices):
         ENTIRE_PLACE = ("entire_place", "Entire Place")
-        PRIVATE_ROOM = ("private_room","Private Room")
-        SHARED_ROOM = ("shared_room","Shared Room")
+        PRIVATE_ROOM = ("private_room", "Private Room")
+        SHARED_ROOM = ("shared_room", "Shared Room")
 
     name = models.CharField(
         max_length=200,
@@ -29,9 +30,12 @@ class Room(CommonModel):
         max_length=250,
     )
     pet_friendly = models.BooleanField(default=False)
-    kind = models.CharField(
-        max_length=20,
-        choices=RoomKindChoices.choices
+    kind = models.CharField(max_length=20, choices=RoomKindChoices.choices)
+    owner = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="rooms",
+        default=1,
     )
     amenities = models.ManyToManyField("Amenity", related_name="rooms")
     category = models.ForeignKey(
@@ -39,7 +43,7 @@ class Room(CommonModel):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="rooms"
+        related_name="rooms",
     )
 
     def __str__(self):
@@ -48,8 +52,8 @@ class Room(CommonModel):
     def total_amenities(self):
         return self.amenities.count()
 
-class Amenity(CommonModel):
 
+class Amenity(CommonModel):
     name = models.CharField(
         max_length=200,
     )
@@ -64,5 +68,3 @@ class Amenity(CommonModel):
 
     class Meta:
         verbose_name_plural = "Amenities"
-
-
