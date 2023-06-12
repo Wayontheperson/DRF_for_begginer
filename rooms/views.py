@@ -28,7 +28,7 @@ class Amenities(APIView):
             )
 
 
-class AmedityDetail(APIView):
+class AmenityDetail(APIView):
     def get_object(self, pk):
         try:
             return Amenity.objects.get(id=pk)
