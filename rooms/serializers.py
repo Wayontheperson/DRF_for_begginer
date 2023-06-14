@@ -20,9 +20,10 @@ class RoomSerializer(serializers.ModelSerializer):
 
 
 class RoomDetailSerializer(serializers.ModelSerializer):
-    owner = TinyUserSerializer()
-    amenities = AmenitySerializer(many=True)
-    category = CategorySerializer()
+    # read_only 선언시 validated_data로 받을 수 없다.
+    owner = TinyUserSerializer(read_only=True )
+    amenities = AmenitySerializer(read_only=True,many=True,)
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Room
