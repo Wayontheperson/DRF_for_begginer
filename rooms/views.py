@@ -1,13 +1,10 @@
 from django.db import transaction
-
-from . import serializers
-from .models import Amenity, Room
-from categories.models import Category
-from reviews.serializers import ReviewSerializer
+from django.shortcuts import get_object_or_404
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.exceptions import (
     NotFound,
     ParseError,
@@ -15,8 +12,16 @@ from rest_framework.exceptions import (
     NotAuthenticated,
 )
 
+from . import serializers
+from .models import Amenity, Room
+from categories.models import Category
+from reviews.serializers import ReviewSerializer
+from medias.serializers import PhothSerializer
+
 
 class Amenities(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
         all_amenities = Amenity.objects.all()
         serializer = serializers.AmenitySerializer(all_amenities, many=True)
@@ -35,6 +40,8 @@ class Amenities(APIView):
 
 
 class AmenityDetail(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get_object(self, pk):
         try:
             return Amenity.objects.get(id=pk)
@@ -69,48 +76,50 @@ class AmenityDetail(APIView):
 
 
 class Rooms(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
         rooms = Room.objects.all()
         serializer = serializers.RoomListSerializer(rooms, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        if request.user.is_authenticated:
-            serializer = serializers.RoomDetailSerializer(data=request.data)
-            # read_only 필드는 validated_data로 넘어가지 않는다
-            if serializer.is_valid():
-                category_pk = request.data.get("category")
-                if not category_pk:
-                    raise ParseError("Category is required")
-                try:
-                    category = Category.objects.get(pk=category_pk)
-                    if category.kind == Category.CategoryKindChoices.EXPERIENCES:
-                        raise ParseError("The category kind should be 'rooms'")
-                except Category.DoesNotExist:
-                    raise ParseError("Category not found")
+        serializer = serializers.RoomDetailSerializer(data=request.data)
+        # read_only 필드는 validated_data로 넘어가지 않는다
+        if serializer.is_valid():
+            category_pk = request.data.get("category")
+            if not category_pk:
+                raise ParseError("Category is required")
+            try:
+                category = Category.objects.get(pk=category_pk)
+                if category.kind == Category.CategoryKindChoices.EXPERIENCES:
+                    raise ParseError("The category kind should be 'rooms'")
+            except Category.DoesNotExist:
+                raise ParseError("Category not found")
 
-                try:
-                    with transaction.atomic():
+            try:
+                with transaction.atomic():
 
-                        updated_room = serializer.save(owner=request.user, category=category)
-                        # Amenity is a many_to_many field
-                        # how to work with many_to_many field
-                        amenities = request.data.get("amenities")
-                        for amenity_pk in amenities:
-                            amenity = Amenity.objects.get(pk=amenity_pk)
-                            updated_room.amenities.add(amenity)
-                        serializer = serializers.RoomDetailSerializer(updated_room)
-                        return Response(serializer.data)
-                except Exception:
-                    raise ParseError("Amenity not found")
-            else:
-                return Response(serializer.errors,
-                                status=HTTP_400_BAD_REQUEST)
+                    updated_room = serializer.save(owner=request.user, category=category)
+                    # Amenity is a many_to_many field
+                    # how to work with many_to_many field
+                    amenities = request.data.get("amenities")
+                    for amenity_pk in amenities:
+                        amenity = Amenity.objects.get(pk=amenity_pk)
+                        updated_room.amenities.add(amenity)
+                    serializer = serializers.RoomDetailSerializer(updated_room)
+                    return Response(serializer.data)
+            except Exception:
+                raise ParseError("Amenity not found")
         else:
-            raise NotAuthenticated
+            return Response(serializer.errors,
+                            status=HTTP_400_BAD_REQUEST)
+
 
 
 class RoomsDetail(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def _get_object(self, pk):
         try:
             room = Room.objects.get(id=pk)
@@ -125,11 +134,6 @@ class RoomsDetail(APIView):
 
     def put(self, request, pk):
         room = self._get_object(pk)
-        if not request.user.is_authenticated:
-            raise NotAuthenticated
-        if room.owner != request.user:
-            raise PermissionDenied
-
         serializer = serializers.RoomDetailSerializer(room,
                                                       data=request.data,
                                                       partial=True)
@@ -165,15 +169,13 @@ class RoomsDetail(APIView):
 
     def delete(self, request, pk):
         room = self._get_object(pk)
-        if not request.user.is_authenticated:
-            raise NotAuthenticated
-        if room.owner != request.user:
-            raise PermissionDenied
         room.delete()
         return Response(status=HTTP_204_NO_CONTENT)
 
 
 class RoomReviews(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def _get_object(self, pk):
         try:
             return Room.objects.get(pk=pk)
@@ -196,6 +198,19 @@ class RoomReviews(APIView):
 
 
 class RoomPhotos(APIView):
+    def _get_objcet(self,pk):
+        return get_object_or_404(Room, pk=pk)
 
     def post(self, request, pk):
-        pass
+        room = self._get_objcet(pk)
+        if not request.user.is_authenticated:
+            raise NotAuthenticated
+        if request.user != room.owner:
+            raise PermissionDenied
+        serializer = PhothSerializer(data=request.data)
+        if serializer.is_valid():
+            photo = serializer.save(room=room)
+            serializer = PhothSerializer(photo)
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
