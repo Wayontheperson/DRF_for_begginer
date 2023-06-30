@@ -196,8 +196,20 @@ class RoomReviews(APIView):
                                       many=True)
         return Response(serializer.data)
 
+    def post(self, requset, pk):
+        serializer = ReviewSerializer(data=requset.data)
+        if serializer.is_valid():
+            review = serializer.save(
+                user=requset.user,
+                room=self._get_object(pk)
+            )
+            serializer = ReviewSerializer(review)
+            return Response(serializer.data)
+
 
 class RoomPhotos(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def _get_objcet(self,pk):
         return get_object_or_404(Room, pk=pk)
 
