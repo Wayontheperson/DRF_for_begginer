@@ -28,6 +28,7 @@ class RoomDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()
     photos = PhothSerializer(many=True, read_only=True)
+    is_host = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
@@ -36,10 +37,15 @@ class RoomDetailSerializer(serializers.ModelSerializer):
     def get_rating(self, room):
         return room.rating()
 
+    def get_is_host(self, room):
+        request = self.context["request"]
+        return room.owner == request.user
+
 
 class RoomListSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
     photos = PhothSerializer(many=True, read_only=True)
+    is_host = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
@@ -51,7 +57,12 @@ class RoomListSerializer(serializers.ModelSerializer):
             "price",
             "rating",
             "photos",
+            "is_host",
         )
 
     def get_rating(self, room):
         return room.rating()
+
+    def get_is_host(self, room):
+        request = self.context["request"]
+        return room.owner == request.user

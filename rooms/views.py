@@ -80,7 +80,7 @@ class Rooms(APIView):
 
     def get(self, request):
         rooms = Room.objects.all()
-        serializer = serializers.RoomListSerializer(rooms, many=True)
+        serializer = serializers.RoomListSerializer(rooms, context={"request": request}, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -116,7 +116,6 @@ class Rooms(APIView):
                             status=HTTP_400_BAD_REQUEST)
 
 
-
 class RoomsDetail(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -129,7 +128,7 @@ class RoomsDetail(APIView):
 
     def get(self, request, pk):
         room = self._get_object(pk)
-        serializer = serializers.RoomDetailSerializer(room)
+        serializer = serializers.RoomDetailSerializer(room, context={"request": request}, )
         return Response(serializer.data)
 
     def put(self, request, pk):
@@ -210,7 +209,7 @@ class RoomReviews(APIView):
 class RoomPhotos(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def _get_objcet(self,pk):
+    def _get_objcet(self, pk):
         return get_object_or_404(Room, pk=pk)
 
     def post(self, request, pk):
