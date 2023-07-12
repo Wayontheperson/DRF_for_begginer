@@ -84,6 +84,12 @@ class Rooms(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        # 만약 RoomDetailSerializer에 model object가 parameter로 들어가면 serializer는 update function을 수행
+        #
+        # ex)
+        # rooms = Room.objects.get()
+        # serializer = serializers.RoomDetailSerializer(rooms, data=request.data)
+        # serializer.ModelSerializer  update method 수행됨.
         serializer = serializers.RoomDetailSerializer(data=request.data)
         # read_only 필드는 validated_data로 넘어가지 않는다
         if serializer.is_valid():
