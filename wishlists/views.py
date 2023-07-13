@@ -10,7 +10,7 @@ from .models import Wishlist
 from .serializers import WishlistSerializer
 
 
-class Whishlists(APIView):
+class Wishlists(APIView):
     def get(self, request):
         all_wishlist = Wishlist.objects.filter(user=request.user)
         serializer = WishlistSerializer(
