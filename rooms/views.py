@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,8 +16,10 @@ from rest_framework.exceptions import (
 from . import serializers
 from .models import Amenity, Room
 from categories.models import Category
+from bookings.models import Bookings
 from reviews.serializers import ReviewSerializer
 from medias.serializers import PhothSerializer
+from bookings.serializers import PublicBookingSerializer
 
 
 class Amenities(APIView):
@@ -153,13 +156,12 @@ class RoomsDetail(APIView):
             amenities = request.data.get("amenities")
             if amenities is not None:
                 try:
-                    with transaction.atomic():
-                        updated_room = serializer.save(owner=request.user, category=category)
-                        for amenity_pk in amenities:
-                            amenity = Amenity.objects.get(pk=amenity_pk)
-                            updated_room.amenities.add(amenity)
-                        serializer = serializers.RoomDetailSerializer(updated_room)
-                        return Response(serializer.data)
+                    updated_room = serializer.save(owner=request.user, category=category)
+                    for amenity_pk in amenities:
+                        amenity = Amenity.objects.get(pk=amenity_pk)
+                        updated_room.amenities.add(amenity)
+                    serializer = serializers.RoomDetailSerializer(updated_room, context={"request": request})
+                    return Response(serializer.data)
                 except Exception:
                     raise ParseError("Amenity not found")
             else:
@@ -231,3 +233,20 @@ class RoomPhotos(APIView):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class RoomBookings(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_object(self, pk):
+        return get_object_or_404(Room, pk=pk)
+
+    def get(self, request, pk):
+        room = self.get_object(pk)
+        now = timezone.localtime(timezone.now()).date()
+        bookings = Bookings.objects.filter(room=room,
+                                           kind=Bookings.BokkingKindChoices.ROOM,
+                                           check_in__gte=now,
+                                           )
+        serializer = PublicBookingSerializer(bookings, many=True)
+        return Response(serializer.data)
